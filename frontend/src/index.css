@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: Manrope, ui-sans-serif, system-ui, sans-serif;
+  background:
+    linear-gradient(90deg, rgba(24, 54, 92, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(24, 54, 92, 0.04) 1px, transparent 1px),
+    #e9f1fb;
+  background-size: 32px 32px;
+  color: #23344a;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.prose-block {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.prose-block p {
+  margin: 0;
+  color: #516074;
+  font-family: Literata, Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.8;
+}
+
+.page-reveal {
+  animation: page-reveal 0.55s ease both;
+}
+
+.brand-ring {
+  width: 27px;
+  height: 27px;
+  border: 3px solid rgba(255, 255, 255, 0.86);
+  border-right-color: transparent;
+  border-radius: 999px;
+  transform: rotate(-22deg);
+  display: block;
+}
+
+.awaken-stage {
+  min-height: min(58vw, 610px);
+  background:
+    radial-gradient(circle at 50% 36%, rgba(43, 71, 112, 0.2), transparent 45%),
+    radial-gradient(circle at 20% 20%, rgba(47, 111, 219, 0.1), transparent 35%),
+    linear-gradient(145deg, #0d1a2c, #050b14 76%);
+}
+
+.awaken-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 7px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.awaken-ghost line {
+  stroke: #36577f;
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.awaken-edge {
+  stroke: #6f97df;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: var(--edge-length);
+  stroke-dashoffset: var(--edge-length);
+  opacity: 0;
+}
+
+.awaken-stage.is-live .awaken-edge {
+  animation: awaken-edge 0.9s ease forwards;
+}
+
+.awaken-node {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.awaken-node circle {
+  fill: #4374da;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 3;
+}
+
+.awaken-node text {
+  fill: #f7fbff;
+  font: 800 22px Manrope, sans-serif;
+}
+
+.awaken-stage.is-live .awaken-node {
+  animation: awaken-node 0.44s cubic-bezier(0.21, 1.12, 0.42, 1.02) forwards;
+}
+
+.awaken-tracer {
+  fill: #61e68e;
+  filter: drop-shadow(0 0 10px rgba(97, 230, 142, 0.75));
+  offset-path: path("M330 70 L445 130 L475 245 L385 350 L245 350 L155 245 L190 130 L330 70 L385 350 L500 140 L245 350");
+  opacity: 0;
+}
+
+.awaken-stage.is-live .awaken-tracer {
+  animation: awaken-trace 5.5s 1.1s ease-in-out infinite;
+}
+
+.awaken-caption {
+  animation: caption-rise 0.6s 1.15s ease both;
+}
+
+.lesson-figure {
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid #1f3451;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(61, 104, 174, 0.16), transparent 42%),
+    linear-gradient(145deg, #101b2d, #07111e);
+  box-shadow: 0 18px 50px rgba(20, 45, 80, 0.14);
+}
+
+.lesson-figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+}
+
+.lesson-lines line {
+  stroke: #6f97df;
+  stroke-width: 6;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.lesson-node circle {
+  fill: #4374da;
+}
+
+.lesson-node text {
+  fill: white;
+  font: 800 28px Manrope, sans-serif;
+}
+
+.lesson-figure figcaption {
+  margin: 0;
+  padding: 0 1.5rem 1.5rem;
+  text-align: center;
+  color: #95a5bb;
+  font: 500 1.05rem Literata, Georgia, serif;
+}
+
+@keyframes page-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes awaken-edge {
+  from {
+    opacity: 0;
+    stroke-dashoffset: var(--edge-length);
+  }
+
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes awaken-node {
+  from {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes awaken-trace {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+@keyframes caption-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-reveal,
+  .awaken-stage.is-live .awaken-edge,
+  .awaken-stage.is-live .awaken-node,
+  .awaken-stage.is-live .awaken-tracer,
+  .awaken-caption {
+    animation: none;
+  }
+
+  .awaken-edge,
+  .awaken-node {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
