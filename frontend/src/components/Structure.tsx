@@ -200,15 +200,15 @@ export function AwakenIntro({ accent, onContinue }: AwakenProps) {
           />
           <div className="aw-activate-wrap">
             <button className="aw-activate" onClick={() => setLive(true)}>
-              Оживити граф&nbsp;&nbsp;
-              <svg width="20" height="14" viewBox="0 0 20 14" style={{ verticalAlign: '-2px' }}>
-                <line x1="3" y1="11" x2="10" y2="3" stroke="currentColor" strokeWidth="1.6" />
-                <line x1="10" y1="3" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" />
-                <circle cx="3" cy="11" r="2.6" fill="currentColor" />
-                <circle cx="10" cy="3" r="2.6" fill="currentColor" />
-                <circle cx="17" cy="11" r="2.6" fill="currentColor" />
-              </svg>
-            </button>
+  Оживити граф
+  <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true">
+    <line x1="3" y1="11" x2="10" y2="3" stroke="currentColor" strokeWidth="1.6" />
+    <line x1="10" y1="3" x2="17" y2="11" stroke="currentColor" strokeWidth="1.6" />
+    <circle cx="3" cy="11" r="2.6" fill="currentColor" />
+    <circle cx="10" cy="3" r="2.6" fill="currentColor" />
+    <circle cx="17" cy="11" r="2.6" fill="currentColor" />
+  </svg>
+</button>
           </div>
         </div>
         <div className="aw-continue">

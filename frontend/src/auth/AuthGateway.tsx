@@ -436,6 +436,31 @@ export function AuthGateway({ onAuthenticated }: AuthGatewayProps): JSX.Element 
   const passwordReady = allPasswordChecksPass(passwordChecks);
   const confirmationReady = passwordsMatch(signupForm.password, signupForm.confirmPassword);
 
+  const passwordError =
+  signupForm.password.length === 0
+    ? ''
+    : !passwordChecks.minLength
+    ? 'Пароль має містити щонайменше 8 символів'
+    : !passwordChecks.uppercase
+    ? 'Додай хоча б одну велику літеру'
+    : !passwordChecks.lowercase
+    ? 'Додай хоча б одну малу літеру'
+    : !passwordChecks.numeric
+    ? 'Додай хоча б одну цифру'
+    : !passwordChecks.special
+    ? 'Додай хоча б один спецсимвол'
+    : !passwordChecks.maxLength
+    ? 'Пароль має бути коротший за 128 символів'
+    : !passwordChecks.notCommon
+    ? 'Цей пароль занадто типовий'
+    : !passwordChecks.noSequential
+    ? 'Уникай очевидних послідовностей'
+    : !passwordChecks.noRepeated
+    ? 'Не використовуй 4 однакові символи підряд'
+    : !passwordChecks.notEmailDerived
+    ? 'Пароль не повинен містити імʼя з email'
+    : '';
+
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
@@ -688,6 +713,7 @@ export function AuthGateway({ onAuthenticated }: AuthGatewayProps): JSX.Element 
               autoComplete="current-password"
               onChange={(password) => setLoginForm((current) => ({ ...current, password }))}
             />
+            
             <button className="auth-link" type="button" disabled={busy} onClick={() => setViewState({ view: 'forgot_password' })}>
               Забули пароль?
             </button>
@@ -715,41 +741,30 @@ export function AuthGateway({ onAuthenticated }: AuthGatewayProps): JSX.Element 
               />
             </label>
             <PasswordField
-              label="Пароль"
-              value={signupForm.password}
-              disabled={busy}
-              autoComplete="new-password"
-              onChange={(password) => setSignupForm((current) => ({ ...current, password }))}
-            />
-            <PasswordField
-              label="Повторіть пароль"
-              value={signupForm.confirmPassword}
-              disabled={busy}
-              autoComplete="new-password"
-              onChange={(confirmPassword) => setSignupForm((current) => ({ ...current, confirmPassword }))}
-            />
-            <ul className="password-list">
-              {[
-                ['minLength', 'Мінімум 8 символів'],
-                ['uppercase', 'Велика літера'],
-                ['lowercase', 'Мала літера'],
-                ['numeric', 'Цифра'],
-                ['special', 'Спецсимвол !@#$%^&*'],
-                ['maxLength', 'Не більше 128 символів'],
-                ['notCommon', 'Не типовий пароль'],
-                ['noSequential', 'Без очевидних послідовностей'],
-                ['noRepeated', 'Без 4 однакових символів підряд'],
-                ['notEmailDerived', 'Не містить імʼя з email'],
-              ].map(([key, label]) => (
-                <li key={key} className={passwordChecks[key as keyof typeof passwordChecks] ? 'pass' : 'fail'}>
-                  <span /> {label}
-                </li>
-              ))}
-            </ul>
-            {signupForm.confirmPassword && !confirmationReady && <FieldError>Паролі не збігаються.</FieldError>}
-            <button className="auth-submit" disabled={busy || !emailValidation.ok || !passwordReady || !confirmationReady}>
-              {busy ? 'Створюємо...' : 'Створити акаунт'}
-            </button>
+  label="Пароль"
+  value={signupForm.password}
+  disabled={busy}
+  autoComplete="new-password"
+  onChange={(password) => setSignupForm((current) => ({ ...current, password }))}
+ />
+{passwordError && <FieldError>{passwordError}</FieldError>}
+
+<PasswordField
+  label="Повторіть пароль"
+  value={signupForm.confirmPassword}
+  disabled={busy}
+  autoComplete="new-password"
+  onChange={(confirmPassword) => setSignupForm((current) => ({ ...current, confirmPassword }))}
+ />
+
+{signupForm.confirmPassword && !confirmationReady && <FieldError>Паролі не збігаються.</FieldError>}
+
+<button
+  className="auth-submit"
+  disabled={busy || !signupForm.email || !signupForm.password || !signupForm.confirmPassword}
+>
+  {busy ? 'Створюємо...' : 'Створити акаунт'}
+</button>
           </form>
         )}
 

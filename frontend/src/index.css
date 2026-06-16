@@ -114,7 +114,26 @@ button{font-family:inherit;cursor:pointer;}
 .aw.live .aw-poem-bot{opacity:1;transform:none;}
 .aw-activate-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .5s;}
 .aw.live .aw-activate-wrap{opacity:0;pointer-events:none;}
-.aw-activate{font-family:'Manrope',sans-serif;font-weight:600;font-size:15px;letter-spacing:.02em;color:#dce8f8;background:rgba(11,20,36,.5);border:1.5px solid var(--accent);border-radius:12px;padding:13px 32px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);transition:.18s;}
+.aw-activate {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: .02em;
+  color: #dce8f8;
+  background: rgba(11, 20, 36, .5);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  padding: 13px 32px;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition: .18s;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
 .aw-activate:hover{background:var(--accent);color:#fff;transform:translateY(-1px);}
 .aw-continue{display:flex;justify-content:center;margin:22px 0 26px;opacity:0;transform:translateY(6px);transition:opacity .6s .7s,transform .6s .7s;pointer-events:none;}
 .aw-continue .cover-cta{white-space:nowrap;}

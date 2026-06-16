@@ -251,7 +251,7 @@ function openSubtopic(id: string) {
   );
 
   if (!authUser) {
-    return <AuthGateway onAuthenticated={setAuthUser} />;
+   return <AuthGateway onAuthenticated={setAuthUser} />;
   }
 
   /* ---------- екран: вступна анімація ---------- */
