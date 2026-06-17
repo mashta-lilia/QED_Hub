@@ -191,22 +191,29 @@ export function EulerLab() {
   const [step, setStep] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const ekey = (a: string, b: string) => [a, b].sort().join('-');
-  function play() {
-    if (timer.current) clearInterval(timer.current);
+  useEffect(() => {
+  if (tab !== 'e' && timer.current) {
+    clearInterval(timer.current);
+    timer.current = null;
     setStep(0);
-    timer.current = setInterval(() => {
-      setStep((s) => {
-        if (s >= seq.length - 1) {
-          if (timer.current) clearInterval(timer.current);
-          return s;
-        }
-        return s + 1;
-      });
-    }, 850);
   }
-  useEffect(() => () => {
-    if (timer.current) clearInterval(timer.current);
-  }, []);
+}, [tab]);
+
+function play() {
+  if (timer.current) clearInterval(timer.current);
+  setStep(0);
+  timer.current = setInterval(() => {
+    setStep((s) => {
+      if (s >= seq.length - 1) {
+        if (timer.current) clearInterval(timer.current);
+        timer.current = null;
+        return s;
+      }
+      return s + 1;
+    });
+  }, 850);
+}
+  
   const traversed = new Set<string>();
   for (let i = 0; i < step; i++) traversed.add(ekey(seq[i], seq[i + 1]));
   const cur = epos[seq[step]];

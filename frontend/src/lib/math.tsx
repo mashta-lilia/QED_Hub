@@ -9,7 +9,14 @@ const KATEX_MACROS: Record<string, string> = {
   '\\th': '\\operatorname{th}',
   '\\cth': '\\operatorname{cth}',
 };
-
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 export function renderTex(tex: string, display?: boolean): string {
   try {
     return katex.renderToString(tex, {
@@ -19,7 +26,7 @@ export function renderTex(tex: string, display?: boolean): string {
       strict: false,
     });
   } catch {
-    return "<span style='color:#c0392b'>" + String(tex) + '</span>';
+    return `<span style="color:#c0392b">${escapeHtml(String(tex))}</span>`;
   }
 }
 

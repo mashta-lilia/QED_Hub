@@ -515,7 +515,7 @@ export function AuthGateway({ onAuthenticated }: AuthGatewayProps): JSX.Element 
       return;
     }
 
-    setFieldError('Invalid credentials');
+    setFieldError(result.message || mapError('AUTH_001'));
   }
 
   async function handleSignup(event: React.FormEvent<HTMLFormElement>): Promise<void> {
