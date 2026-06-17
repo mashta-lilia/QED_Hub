@@ -20,6 +20,7 @@ type UserRepository interface {
 type SessionRepository interface {
 	Create(ctx context.Context, s *session.Session) error
 	GetByID(ctx context.Context, id uuid.UUID) (*session.Session, error)
-	GetByRefreshToken(ctx context.Context, token string) (*session.Session, error)
+	GetByRefreshTokenHash(ctx context.Context, tokenHash string) (*session.Session, error)
 	Revoke(ctx context.Context, id uuid.UUID) error
+	RevokeAllForUser(ctx context.Context, userID uuid.UUID) error
 }

@@ -29,3 +29,7 @@ func NewVerificationToken(expiration time.Duration) (*VerificationToken, error) 
 func (t *VerificationToken) IsValid() bool {
 	return time.Now().Before(t.ExpiresAt)
 }
+
+func (t *VerificationToken) String() string {
+	return t.Token
+}

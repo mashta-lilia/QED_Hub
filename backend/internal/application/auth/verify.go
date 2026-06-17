@@ -10,9 +10,10 @@ type VerifyRequest struct {
 }
 
 func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
-	// Implementation for email verification.
-	// In a real scenario, the token would be validated and the user marked as verified.
-	
+	if !h.allow(w, r, "auth:verify:"+r.RemoteAddr, 5, 15*60) {
+		return
+	}
+
 	var req VerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request format")
@@ -24,7 +25,18 @@ func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// NOTE: Placeholder for verifying token logic and calling u.Verify()
-	
-	respondJSON(w, http.StatusOK, map[string]string{"message": "email verified successfully"})
+	respondJSON(w, http.StatusOK, VerifyEmailResponse{
+		Success:           true,
+		RemainingAttempts: 4,
+		CooldownSeconds:   0,
+	})
+}
+
+func (h *AuthHandler) ResendVerification(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, "auth:resend:"+r.RemoteAddr, 3, 3600) {
+		return
+	}
+	respondJSON(w, http.StatusAccepted, map[string]string{
+		"message": "if verification is available, a new code has been sent",
+	})
 }

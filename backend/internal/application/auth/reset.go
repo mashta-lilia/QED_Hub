@@ -15,7 +15,10 @@ type ResetPasswordConfirmRequest struct {
 }
 
 func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
-	// Implementation to initiate password reset (send email)
+	if !h.allow(w, r, "auth:reset:"+r.RemoteAddr, 3, 24*60*60) {
+		return
+	}
+
 	var req ResetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request format")
@@ -26,10 +29,17 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) ResetPasswordConfirm(w http.ResponseWriter, r *http.Request) {
-	// Implementation to confirm password reset
+	if !h.allow(w, r, "auth:reset-confirm:"+r.RemoteAddr, 5, 3600) {
+		return
+	}
+
 	var req ResetPasswordConfirmRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid request format")
+		return
+	}
+	if req.Token == "" {
+		respondError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 

@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"qed-hub-backend/internal/application/port"
 )
@@ -39,4 +42,41 @@ func respondJSON(w http.ResponseWriter, status int, data interface{}) {
 
 func respondError(w http.ResponseWriter, status int, message string) {
 	respondJSON(w, status, map[string]string{"error": message})
+}
+
+func newOpaqueToken(bytes int) (string, error) {
+	raw := make([]byte, bytes)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(raw), nil
+}
+
+func (h *AuthHandler) allow(w http.ResponseWriter, r *http.Request, key string, limit int, windowSeconds int) bool {
+	if h.limiter == nil {
+		return true
+	}
+	ok, err := h.limiter.Allow(r.Context(), key, limit, time.Duration(windowSeconds)*time.Second)
+	if err != nil || !ok {
+		respondError(w, http.StatusTooManyRequests, "rate limit exceeded")
+		return false
+	}
+	return true
+}
+
+func (h *AuthHandler) CSRFToken(w http.ResponseWriter, r *http.Request) {
+	token, err := newOpaqueToken(32)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to create csrf token")
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    token,
+		HttpOnly: false,
+		Secure:   r.TLS != nil,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+	respondJSON(w, http.StatusOK, map[string]string{"csrf_token": token})
 }

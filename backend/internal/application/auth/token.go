@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"net/http"
 	"time"
 
@@ -18,8 +16,22 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sess, err := h.sessRepo.GetByRefreshToken(ctx, cookie.Value)
-	if err != nil || sess == nil || !sess.IsValid() {
+	if !h.allow(w, r, "auth:refresh", 10, 60) {
+		return
+	}
+
+	refreshHash := session.HashRefreshToken(cookie.Value)
+	sess, err := h.sessRepo.GetByRefreshTokenHash(ctx, refreshHash)
+	if err != nil || sess == nil {
+		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
+		return
+	}
+	if sess.IsRevoked {
+		_ = h.sessRepo.RevokeAllForUser(ctx, sess.UserID)
+		respondError(w, http.StatusUnauthorized, "refresh token reuse detected")
+		return
+	}
+	if !sess.IsValid() {
 		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
@@ -41,9 +53,11 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new refresh token
-	rtBytes := make([]byte, 32)
-	rand.Read(rtBytes)
-	newRefreshToken := hex.EncodeToString(rtBytes)
+	newRefreshToken, err := newOpaqueToken(32)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to generate refresh token")
+		return
+	}
 
 	newSess := session.NewSession(u.ID, newRefreshToken, 7*24*time.Hour)
 	if err := h.sessRepo.Create(ctx, newSess); err != nil {
@@ -55,17 +69,23 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		Name:     "refresh_token",
 		Value:    newRefreshToken,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   r.TLS != nil,
+		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 		Expires:  newSess.ExpiresAt,
 	})
 
 	respondJSON(w, http.StatusOK, AuthResponse{
-		AccessToken: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    int((15 * time.Minute).Seconds()),
+		TokenType:    "Bearer",
 		User: UserDTO{
-			ID:    u.ID.String(),
-			Email: u.Email.String(),
-			Name:  u.Name,
+			ID:           u.ID.String(),
+			Email:        u.Email.String(),
+			Name:         u.Name,
+			IsVerified:   u.Verified,
+			AuthProvider: "email",
 		},
 	})
 }

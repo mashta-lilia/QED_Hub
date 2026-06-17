@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"time"
 
@@ -11,11 +12,11 @@ import (
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Rate limiting check
-	ip := r.RemoteAddr
-	allowed, err := h.limiter.Allow(ctx, "register_ip:"+ip, 5, 15*time.Minute)
-	if err != nil || !allowed {
-		respondError(w, http.StatusTooManyRequests, "rate limit exceeded")
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+	if !h.allow(w, r, "auth:register:ip:"+ip, 3, 3600) {
 		return
 	}
 
@@ -38,7 +39,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	existingUser, _ := h.userRepo.GetByEmail(ctx, email)
 	if existingUser != nil {
-		respondError(w, http.StatusConflict, user.ErrUserAlreadyExists.Error())
+		respondJSON(w, http.StatusAccepted, RegisterResponse{
+			Message: "if the email can be registered, a verification code has been sent",
+		})
 		return
 	}
 
@@ -59,8 +62,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For simplicity, we just return created without email verification logic yet
-	// In reality, we would send an email here with a verification token
+	verificationToken, err := user.NewVerificationToken(10 * time.Minute)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to create verification token")
+		return
+	}
+	if h.email != nil {
+		go h.email.SendEmail(ctx, email.String(), "Verify your QED Hub account", "Your verification code is "+verificationToken.String())
+	}
 
-	respondJSON(w, http.StatusCreated, map[string]string{"message": "user created successfully"})
+	respondJSON(w, http.StatusCreated, RegisterResponse{
+		Message:               "if the email can be registered, a verification code has been sent",
+		VerificationSessionID: newUser.ID.String(),
+	})
 }

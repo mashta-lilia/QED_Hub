@@ -36,8 +36,10 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusOK, UserDTO{
-		ID:    u.ID.String(),
-		Email: u.Email.String(),
-		Name:  u.Name,
+		ID:           u.ID.String(),
+		Email:        u.Email.String(),
+		Name:         u.Name,
+		IsVerified:   u.Verified,
+		AuthProvider: "email",
 	})
 }

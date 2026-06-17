@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
 	"qed-hub-backend/internal/application/auth"
 	"qed-hub-backend/internal/infrastructure"
@@ -19,6 +19,7 @@ import (
 	"qed-hub-backend/internal/platform/jwt"
 	"qed-hub-backend/internal/platform/postgres"
 	"qed-hub-backend/internal/platform/redis"
+	transportmiddleware "qed-hub-backend/internal/transport/middleware"
 )
 
 func main() {
@@ -55,10 +56,10 @@ func run() error {
 	rateLimiter := redis.NewRateLimiter(redisClient)
 	argonHasher := hash.NewArgon2idHasher()
 	tokenService := jwt.NewTokenService(cfg.JWTSymmetricKey, "qed-hub-auth")
-	
+
 	// Note: AWS SES and cache initialization omitted for brevity if credentials are not present
 	// They would be initialized here and passed to the auth handler.
-	
+
 	// 4. Setup Infrastructure (Repositories)
 	userRepo := infrastructure.NewUserRepository(dbPool)
 	sessRepo := infrastructure.NewSessionRepository(dbPool)
@@ -68,22 +69,29 @@ func run() error {
 
 	// 6. Setup Router
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(chimiddleware.RequestID)
+	r.Use(chimiddleware.RealIP)
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
+	r.Use(chimiddleware.Timeout(60 * time.Second))
+	r.Use(transportmiddleware.SecurityHeaders)
+	r.Use(transportmiddleware.CORS(cfg.ClientOrigin))
 
 	r.Route("/api/auth", func(r chi.Router) {
-		r.Post("/register", authHandler.Register)
-		r.Post("/login", authHandler.Login)
-		r.Post("/refresh", authHandler.Refresh)
-		r.Post("/logout", authHandler.Logout)
+		r.Get("/csrf-token", authHandler.CSRFToken)
+		r.Group(func(r chi.Router) {
+			r.Use(transportmiddleware.CSRF)
+			r.Post("/register", authHandler.Register)
+			r.Post("/login", authHandler.Login)
+			r.Post("/refresh-token", authHandler.Refresh)
+			r.Post("/logout", authHandler.Logout)
+			r.Post("/verify-email", authHandler.VerifyEmail)
+			r.Post("/resend-verification", authHandler.ResendVerification)
+			r.Post("/google", authHandler.GoogleOAuth)
+			r.Post("/reset-password", authHandler.ResetPassword)
+			r.Post("/reset-password/confirm", authHandler.ResetPasswordConfirm)
+		})
 		r.Get("/me", authHandler.Me)
-		r.Post("/verify", authHandler.VerifyEmail)
-		r.Get("/google", authHandler.GoogleOAuth)
-		r.Post("/reset", authHandler.ResetPassword)
-		r.Post("/reset/confirm", authHandler.ResetPasswordConfirm)
 	})
 
 	// 7. Start Server

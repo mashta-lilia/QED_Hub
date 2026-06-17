@@ -9,15 +9,17 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Env              string
-	Port             int
-	DatabaseURL      string
-	RedisURL         string
-	JWTSymmetricKey  string
-	JWTExpiration    time.Duration
-	AWSRegion        string
-	AWSSESFromEmail  string
-	TurnstileSecret  string
+	Env             string
+	Port            int
+	DatabaseURL     string
+	RedisURL        string
+	JWTSymmetricKey string
+	JWTExpiration   time.Duration
+	AWSRegion       string
+	AWSSESFromEmail string
+	TurnstileSecret string
+	ClientOrigin    string
+	SecureCookies   bool
 }
 
 // Load reads configuration from environment variables
@@ -42,6 +44,8 @@ func Load() (*Config, error) {
 		AWSRegion:       os.Getenv("AWS_REGION"),
 		AWSSESFromEmail: os.Getenv("AWS_SES_FROM_EMAIL"),
 		TurnstileSecret: os.Getenv("TURNSTILE_SECRET"),
+		ClientOrigin:    getEnvOrDefault("CLIENT_ORIGIN", "http://localhost:5173"),
+		SecureCookies:   getEnvOrDefault("SECURE_COOKIES", "false") == "true",
 	}
 
 	return cfg, nil

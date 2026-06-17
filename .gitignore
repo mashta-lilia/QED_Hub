@@ -27,3 +27,7 @@ pnpm-debug.log*
 # backend runtime data
 backend/data/
 backend/.env
+
+# local Go caches used by Codex verification
+.gocache/
+.gomodcache/

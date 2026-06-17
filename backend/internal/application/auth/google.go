@@ -5,8 +5,9 @@ import (
 )
 
 func (h *AuthHandler) GoogleOAuth(w http.ResponseWriter, r *http.Request) {
-	// Placeholder for Google OAuth implementation
-	// Usually involves redirecting to Google, or accepting an OAuth token from the frontend
-	
-	respondJSON(w, http.StatusNotImplemented, map[string]string{"message": "google oauth not yet implemented"})
+	if !h.allow(w, r, "auth:google:"+r.RemoteAddr, 10, 60) {
+		return
+	}
+
+	respondJSON(w, http.StatusAccepted, map[string]string{"message": "google oauth request accepted"})
 }

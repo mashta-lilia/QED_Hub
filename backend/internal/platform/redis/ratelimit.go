@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	goredis "github.com/redis/go-redis/v9"
 )
 
 // RateLimiter provides a generic sliding window rate limiting
@@ -24,19 +26,19 @@ func (r *RateLimiter) Allow(ctx context.Context, key string, limit int, window t
 
 	// Remove older entries
 	pipe.ZRemRangeByScore(ctx, key, "-inf", fmt.Sprintf("%d", min.UnixNano()))
-	
+
 	// Add current timestamp
 	pipe.ZAdd(ctx, key, goredis.Z{
 		Score:  float64(now.UnixNano()),
 		Member: now.UnixNano(),
 	})
-	
+
 	// Count elements
 	countCmd := pipe.ZCard(ctx, key)
-	
+
 	// Set expiration
 	pipe.Expire(ctx, key, window)
-	
+
 	if _, err := pipe.Exec(ctx); err != nil {
 		return false, fmt.Errorf("failed to execute rate limit pipeline: %w", err)
 	}
@@ -55,4 +57,8 @@ func (r *RateLimiter) AllowWithBackoff(ctx context.Context, key string, maxAttem
 		return false, attempts, nil
 	}
 	return true, attempts, nil
+}
+
+func (r *RateLimiter) Reset(ctx context.Context, key string) error {
+	return r.client.Del(ctx, key).Err()
 }

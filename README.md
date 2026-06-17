@@ -4,4 +4,4 @@ The platform is a centralized, high-performance learning environment designed to
 ## Project structure
 
 - `frontend/` - React + TypeScript + Tailwind learning interface.
-- `backend/` - Node.js authentication API with secure password hashing, signed tokens, HttpOnly refresh cookies, and JSON persistence for local development.
+- `backend/` - Go authentication API with package-oriented design, Argon2id password hashing, JWT sessions, PostgreSQL migrations, Redis rate limiting, and security middleware.
