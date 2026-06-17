@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"qed-hub-backend/internal/domain/session"
@@ -16,27 +17,26 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Обчислюємо хеш токена, щоб унікалізувати ключ лімітера
 	refreshHash := session.HashRefreshToken(cookie.Value)
-
-	// Використовуємо ізольований ключ на основі хешу токена для захисту від платформного DoS
 	if !h.allow(w, r, "auth:refresh:"+refreshHash, 10, 60) {
 		return
 	}
 
-	// 2. Запит до репозиторію сесій
 	sess, err := h.sessRepo.GetByRefreshTokenHash(ctx, refreshHash)
 	if err != nil || sess == nil {
 		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
+
+	// Revoke all active sessions if a reuse pattern indicates token theft.
 	if sess.IsRevoked {
 		_ = h.sessRepo.RevokeAllForUser(ctx, sess.UserID)
 		respondError(w, http.StatusUnauthorized, "refresh token reuse detected")
 		return
 	}
+
+	// Terminate expired sessions without affecting other devices.
 	if !sess.IsValid() {
-		_ = h.sessRepo.RevokeAllForUser(ctx, sess.UserID)
 		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
@@ -47,17 +47,14 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ротація сесії (анулювання старої)
 	h.sessRepo.Revoke(ctx, sess.ID)
 
-	// Генерація нового Access Token
 	accessToken, err := h.token.GenerateToken(u.ID.String(), 15*time.Minute)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
-	// Генерація нового Refresh Token
 	newRefreshToken, err := newOpaqueToken(32)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate refresh token")
@@ -70,11 +67,14 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Determine secure flag via proxy-aware environment variable to support TLS termination.
+	isSecure := os.Getenv("SECURE_COOKIES") == "true"
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    newRefreshToken,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   isSecure,
 		SameSite: http.SameSiteStrictMode,
 		Path:     "/",
 		Expires:  newSess.ExpiresAt,

@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -37,20 +39,25 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Фіксуємо час старту для обчислення таймінг-паддінгу
 	startTime := time.Now()
 
-	existingUser, _ := h.userRepo.GetByEmail(ctx, email)
-	if existingUser != nil {
-		// Емуляція роботи Argon2id, щоб вирівняти час відповіді сервера
-		// (Argon2id зазвичай займає від 100ms до 500ms залежно від налаштувань)
-		time.Sleep(250 * time.Millisecond) 
+	genericResponse := RegisterResponse{
+		Message:               "if the email can be registered, a verification code has been sent",
+		VerificationSessionID: "",
+	}
 
-		// ВИПРАВЛЕНО (Рядки 39-42): Повертаємо 202 та ідентичний пустий ID, щоб не видати існування юзера
-		respondJSON(w, http.StatusAccepted, RegisterResponse{
-			Message:               "if the email can be registered, a verification code has been sent",
-			VerificationSessionID: "", 
-		})
+	existingUser, err := h.userRepo.GetByEmail(ctx, email)
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+		respondError(w, http.StatusInternalServerError, "failed to process registration")
+		return
+	}
+
+	if existingUser != nil {
+		// Run dummy hashing to ensure identical CPU execution time across branches.
+		_, _ = h.hash.HashPassword("dummy_password_for_timing_mitigation")
+
+		enforceConstantTimeWindow(startTime, 500*time.Millisecond)
+		respondJSON(w, http.StatusAccepted, genericResponse)
 		return
 	}
 
@@ -76,20 +83,26 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "failed to create verification token")
 		return
 	}
-	if h.email != nil {
-		go h.email.SendEmail(ctx, email.String(), "Verify your QED Hub account", "Your verification code is "+verificationToken.String())
+	
+	if h.email == nil {
+		respondError(w, http.StatusInternalServerError, "email service configuration missing")
+		return
 	}
 
-	// Динамічний паддінг, якщо створення пройшло занадто швидко (для консистентності)
+	// Decouple from request lifetime to ensure email delivery succeeds if client disconnects.
+	go func(bgCtx context.Context, emailStr, tokenStr string) {
+		_ = h.email.SendEmail(bgCtx, emailStr, "Verify your QED Hub account", "Your verification code is "+tokenStr)
+	}(context.Background(), email.String(), verificationToken.String())
+
+	// Enforce uniform delay window to neutralize remote timing attacks.
+	enforceConstantTimeWindow(startTime, 500*time.Millisecond)
+
+	respondJSON(w, http.StatusAccepted, genericResponse)
+}
+
+func enforceConstantTimeWindow(startTime time.Time, duration time.Duration) {
 	elapsed := time.Since(startTime)
-	if elapsed < 250*time.Millisecond {
-		time.Sleep(250*time.Millisecond - elapsed)
+	if elapsed < duration {
+		time.Sleep(duration - elapsed)
 	}
-
-	// ВИПРАВЛЕНО: Змінено статус 201 на 202. Також приховано newUser.ID.String() 
-	// і замінено на "", щоб структура відповіді була абсолютно ідентичною обом гілкам.
-	respondJSON(w, http.StatusAccepted, RegisterResponse{
-		Message:               "if the email can be registered, a verification code has been sent",
-		VerificationSessionID: "", 
-	})
 }
