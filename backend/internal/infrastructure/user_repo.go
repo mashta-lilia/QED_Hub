@@ -2,8 +2,10 @@ package infrastructure
 
 import (
 	"context"
+	"errors" // Додано стандартний пакет для роботи з помилками
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5" // Додано імпорт pgx для доступу до pgx.ErrNoRows
 	"qed-hub-backend/internal/application/port"
 	"qed-hub-backend/internal/domain/user"
 	"qed-hub-backend/internal/infrastructure/sqlquery"
@@ -43,9 +45,10 @@ func (r *userRepo) scanUser(ctx context.Context, query string, args ...interface
 		&u.ID, &emailStr, &u.Name, &u.Hash, &u.Verified, &u.CreatedAt, &u.UpdatedAt,
 	)
 	if err != nil {
-		// pgx.ErrNoRows would mean user not found
-		if err.Error() == "no rows in result set" {
-			return nil, nil // Return nil if not found
+		// ВИПРАВЛЕНО (Рядки 44-47): Замість крихкої перевірки рядка використовуємо типізоване порівняння.
+		// errors.Is працює надійно незалежно від версії драйвера pgx.
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil // Повертаємо nil, якщо користувача не знайдено
 		}
 		return nil, err
 	}

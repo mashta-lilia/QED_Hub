@@ -1,3 +1,6 @@
+// Package sqlquery handles raw SQL embeds.
+// NOTE: Migration to full sqlc type-safe code generation is intentionally deferred 
+// to a later development phase. Using temporary go:embed approach.
 package sqlquery
 
 import _ "embed"

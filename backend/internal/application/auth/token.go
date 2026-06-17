@@ -16,11 +16,15 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !h.allow(w, r, "auth:refresh", 10, 60) {
+	// 1. Обчислюємо хеш токена, щоб унікалізувати ключ лімітера
+	refreshHash := session.HashRefreshToken(cookie.Value)
+
+	// Використовуємо ізольований ключ на основі хешу токена для захисту від платформного DoS
+	if !h.allow(w, r, "auth:refresh:"+refreshHash, 10, 60) {
 		return
 	}
 
-	refreshHash := session.HashRefreshToken(cookie.Value)
+	// 2. Запит до репозиторію сесій
 	sess, err := h.sessRepo.GetByRefreshTokenHash(ctx, refreshHash)
 	if err != nil || sess == nil {
 		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
@@ -32,6 +36,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !sess.IsValid() {
+		_ = h.sessRepo.RevokeAllForUser(ctx, sess.UserID)
 		respondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
@@ -42,17 +47,17 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Revoke old session (rotation)
+	// Ротація сесії (анулювання старої)
 	h.sessRepo.Revoke(ctx, sess.ID)
 
-	// Generate new access token
+	// Генерація нового Access Token
 	accessToken, err := h.token.GenerateToken(u.ID.String(), 15*time.Minute)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate token")
 		return
 	}
 
-	// Generate new refresh token
+	// Генерація нового Refresh Token
 	newRefreshToken, err := newOpaqueToken(32)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "failed to generate refresh token")

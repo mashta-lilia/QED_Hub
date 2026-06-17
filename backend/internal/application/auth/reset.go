@@ -25,7 +25,10 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"message": "if the email exists, a reset link was sent"})
+	// ВИПРАВЛЕНО: Повертаємо 501, оскільки генерація токенів та відправка листів ще не готові
+	respondJSON(w, http.StatusNotImplemented, map[string]string{
+		"error": "Password reset initiation is not yet implemented",
+	})
 }
 
 func (h *AuthHandler) ResetPasswordConfirm(w http.ResponseWriter, r *http.Request) {
@@ -43,5 +46,9 @@ func (h *AuthHandler) ResetPasswordConfirm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"message": "password reset successfully"})
+	// ВИПРАВЛЕНО (Рядки 43-46): Замість фейкового успіху повертаємо 501.
+	// Клієнт повинен знати, що зміна пароля в базі даних ще не працює.
+	respondJSON(w, http.StatusNotImplemented, map[string]string{
+		"error": "Password reset confirmation is not yet implemented",
+	})
 }

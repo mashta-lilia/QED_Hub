@@ -37,10 +37,19 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Фіксуємо час старту для обчислення таймінг-паддінгу
+	startTime := time.Now()
+
 	existingUser, _ := h.userRepo.GetByEmail(ctx, email)
 	if existingUser != nil {
+		// Емуляція роботи Argon2id, щоб вирівняти час відповіді сервера
+		// (Argon2id зазвичай займає від 100ms до 500ms залежно від налаштувань)
+		time.Sleep(250 * time.Millisecond) 
+
+		// ВИПРАВЛЕНО (Рядки 39-42): Повертаємо 202 та ідентичний пустий ID, щоб не видати існування юзера
 		respondJSON(w, http.StatusAccepted, RegisterResponse{
-			Message: "if the email can be registered, a verification code has been sent",
+			Message:               "if the email can be registered, a verification code has been sent",
+			VerificationSessionID: "", 
 		})
 		return
 	}
@@ -71,8 +80,16 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		go h.email.SendEmail(ctx, email.String(), "Verify your QED Hub account", "Your verification code is "+verificationToken.String())
 	}
 
-	respondJSON(w, http.StatusCreated, RegisterResponse{
+	// Динамічний паддінг, якщо створення пройшло занадто швидко (для консистентності)
+	elapsed := time.Since(startTime)
+	if elapsed < 250*time.Millisecond {
+		time.Sleep(250*time.Millisecond - elapsed)
+	}
+
+	// ВИПРАВЛЕНО: Змінено статус 201 на 202. Також приховано newUser.ID.String() 
+	// і замінено на "", щоб структура відповіді була абсолютно ідентичною обом гілкам.
+	respondJSON(w, http.StatusAccepted, RegisterResponse{
 		Message:               "if the email can be registered, a verification code has been sent",
-		VerificationSessionID: newUser.ID.String(),
+		VerificationSessionID: "", 
 	})
 }

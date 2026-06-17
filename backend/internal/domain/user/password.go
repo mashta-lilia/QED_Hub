@@ -1,8 +1,17 @@
 package user
 
 import (
+	"errors"
 	"strings"
 	"unicode"
+	"unicode/utf8" // Додано для коректного підрахунку символів
+)
+
+// Оголошуємо нову чітку помилку для задовгого пароля
+var (
+	//ErrPasswordTooShort = errors.New("password is too short")
+	ErrPasswordTooLong  = errors.New("password is too long")
+	//ErrPasswordTooWeak  = errors.New("password is too weak")
 )
 
 // Password represents a plain text password adhering to domain rules.
@@ -10,8 +19,17 @@ type Password string
 
 // ParsePassword validates a raw password string against complexity rules.
 func ParsePassword(p string) (Password, error) {
-	if len(p) < 8 || len(p) > 128 {
+	// ВИПРАВЛЕНО (Рядки 10-13): Використовуємо utf8.RuneCountInString замість len()
+	// Тепер ми рахуємо реальні символи (runes), а не байтовий розмір рядка.
+	runeCount := utf8.RuneCountInString(p)
+
+	if runeCount < 8 {
 		return "", ErrPasswordTooShort
+	}
+	
+	// ВИПРАВЛЕНО: Для задовгого пароля тепер повертається окрема, логічна помилка
+	if runeCount > 128 {
+		return "", ErrPasswordTooLong
 	}
 
 	var hasUpper, hasLower, hasNumber, hasSpecial bool

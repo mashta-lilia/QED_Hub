@@ -25,10 +25,9 @@ func (h *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, VerifyEmailResponse{
-		Success:           true,
-		RemainingAttempts: 4,
-		CooldownSeconds:   0,
+	// Замінено фейковий успіх на статус 501
+	respondJSON(w, http.StatusNotImplemented, map[string]string{
+		"error": "Email verification is not yet implemented",
 	})
 }
 
@@ -36,7 +35,9 @@ func (h *AuthHandler) ResendVerification(w http.ResponseWriter, r *http.Request)
 	if !h.allow(w, r, "auth:resend:"+r.RemoteAddr, 3, 3600) {
 		return
 	}
-	respondJSON(w, http.StatusAccepted, map[string]string{
-		"message": "if verification is available, a new code has been sent",
+	
+	// Замінено статус 202 на 501
+	respondJSON(w, http.StatusNotImplemented, map[string]string{
+		"error": "Resending verification email is not yet implemented",
 	})
 }

@@ -1,6 +1,9 @@
 package middleware
 
-import "net/http"
+import (
+	"crypto/subtle" // Додано стандартний пакет для безпечного порівняння
+	"net/http"
+)
 
 func SecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,12 +47,21 @@ func CSRF(next http.Handler) http.Handler {
 		}
 
 		cookie, err := r.Cookie("csrf_token")
-		if err == nil && cookie.Value != "" && cookie.Value == r.Header.Get("X-CSRF-Token") {
-			next.ServeHTTP(w, r)
-			return
+		if err == nil && cookie.Value != "" {
+			headerToken := r.Header.Get("X-CSRF-Token")
+
+			// ВИПРАВЛЕНО (Рядки 44-47): Безпечне порівняння токенів за константний час.
+			// ConstantTimeCompare працює лише з байтовими зрізами ([]byte).
+			// Результат 1 означає, що токени абсолютно ідентичні.
+			if subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(headerToken)) == 1 {
+				next.ServeHTTP(w, r)
+				return
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, `{"error":"csrf token required"}`, http.StatusForbidden)
+		// Додано w.WriteHeader, щоб сервер повертав чесний HTTP статус 403 Forbidden разом із JSON
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"error":"csrf token required"}`))
 	})
 }
