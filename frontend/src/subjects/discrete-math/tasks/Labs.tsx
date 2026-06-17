@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { ringLayout, G_NODE, G_GREEN, G_ODD } from '../lib/graph';
-import { RichText, Tex } from '../lib/math';
+import { ringLayout, G_NODE, G_GREEN, G_ODD } from '../../../lib/graph';
+import { RichText, Tex } from '../../../lib/math';
 
 /* === Лаб 1: лема про рукостискання === */
 export function DegreeLab({ accent }: { accent: string }) {

@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { RichText, Tex } from '../lib/math';
-import { GraphDiagram, GFig } from '../lib/graph';
-import { ChevR } from './Icons';
-import type { QuizItem, QuizMC, QuizTypeIn, AnswerState, Worked, Practical } from '../types';
+import { ChevR } from '../../../components/common/Icons';
+import { GraphDiagram, GFig } from '../../../lib/graph';
+import { RichText, Tex } from '../../../lib/math';
+import type { QuizItem, QuizMC, QuizTypeIn, AnswerState, Worked, Practical } from '../../../types';
 
 function Hint({ text }: { text: string }) {
   const [open, setOpen] = useState(false);

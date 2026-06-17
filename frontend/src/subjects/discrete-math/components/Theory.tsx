@@ -1,6 +1,6 @@
-import { GraphDiagram, GFig, k5data } from '../lib/graph';
-import { RichText, Tex } from '../lib/math';
-import type { GEdge } from '../types';
+import { GraphDiagram, GFig, k5data } from '../../../lib/graph';
+import { RichText, Tex } from '../../../lib/math';
+import type { GEdge } from '../../../types';
 
 /* ============================ THEORY PRIMITIVES ============================ */
 export function Def({ label, text, note }: { label?: string; text: string; note?: string }) {

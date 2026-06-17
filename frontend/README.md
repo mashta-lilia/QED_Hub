@@ -25,19 +25,23 @@ react-ts/
    ├─ main.tsx             монтування React + імпорт KaTeX CSS і index.css
    ├─ index.css            @tailwind-директиви + дизайн-система (компонентні класи)
    ├─ types.ts             усі спільні типи (графи, тест, дані уроку, tweaks)
-   ├─ data.ts              контент уроку (означення, тест, розбір, практичні 12–18)
    ├─ App.tsx              корінь: екрани awaken → home → subject → lesson
+   ├─ data/
+   │  └─ subjects.ts       предмети курсу та теми дискретної математики
+   ├─ hooks/
+   │  └─ useLessonProgress.ts  прогрес уроку, XP, streak і localStorage
    ├─ lib/
    │  ├─ math.tsx          KaTeX-рендер: <Tex>, <RichText> (текст із $…$)
    │  └─ graph.tsx         <GraphDiagram>, ringLayout, k5data, кольори вершин
-   └─ components/
-      ├─ Icons.tsx         ChevL / ChevR / IconLock
-      ├─ Tweaks.tsx        панель Tweaks + useTweaks (акцент, шрифт, стиль)
-      ├─ Theory.tsx        Def/Thm/Call/Lead + усі теоретичні сторінки
-      ├─ Labs.tsx          інтерактиви: DegreeLab, ColorLab, EulerLab
-      ├─ Practice.tsx      тест, покроковий розбір, перелік практичних
-      └─ Structure.tsx     Ring, PageHeader, AwakenIntro, AppHeader,
-                           HomeScreen, SubjectScreen + дані предметів/тем
+   ├─ components/
+   │  ├─ common/           Icons, Tweaks
+   │  ├─ curriculum/       HomeScreen, SubjectScreen, ProgressTracker
+   │  └─ layout/           AppHeader, PageHeader
+   └─ subjects/
+      └─ discrete-math/
+         ├─ components/    вступ, екран підтем, GT01 і теоретичні сторінки
+         ├─ data/          контент уроку, підтеми, topics/, порядок сторінок
+         └─ tasks/         інтерактиви, тест, розбір і практичні
 ```
 
 ## Про Tailwind
