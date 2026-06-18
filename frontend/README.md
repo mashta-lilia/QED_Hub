@@ -1,53 +1,65 @@
-# Навчальна платформа: Теорія графів
+# Теорія графів — React + TypeScript + Tailwind
 
-Проєкт на `React + TypeScript + Tailwind CSS`.
+Інтерактивний урок «Основи теорії графів» (Розділ 4 курсу «Дискретна математика»),
+переписаний із single-file HTML у повноцінний проєкт на **Vite + React 18 + TypeScript + Tailwind CSS**.
 
-## Як запустити
+## Запуск
 
 ```bash
 npm install
-npm run dev
-```
-
-Після цього відкрий адресу, яку покаже Vite, зазвичай:
-
-```txt
-http://localhost:5173
+npm run dev        # локальний сервер розробки (http://localhost:5173)
+npm run build      # збірка у dist/ (tsc + vite build)
+npm run preview    # перегляд зібраної версії
 ```
 
 ## Структура
 
-```txt
-src/
-  components/  повторні візуальні блоки
-  data/        теми курсу, підтеми, теорія, питання, практика
-  hooks/       збереження прогресу
-  pages/       окрема папка для кожної сторінки
-  types/       TypeScript-типи
-  utils/       допоміжні функції
+```
+react-ts/
+├─ index.html              точка входу Vite (підключає Google Fonts)
+├─ tailwind.config.js      токени теми (кольори, шрифти, тіні) як Tailwind-утиліти
+├─ postcss.config.js       Tailwind + autoprefixer
+├─ vite.config.ts
+├─ tsconfig*.json
+└─ src/
+   ├─ main.tsx             монтування React + імпорт KaTeX CSS і index.css
+   ├─ index.css            @tailwind-директиви + дизайн-система (компонентні класи)
+   ├─ types.ts             усі спільні типи (графи, тест, дані уроку, tweaks)
+   ├─ App.tsx              корінь: екрани awaken → home → subject → lesson
+   ├─ data/
+   │  └─ subjects.ts       предмети курсу та теми дискретної математики
+   ├─ hooks/
+   │  └─ useLessonProgress.ts  прогрес уроку, XP, streak і localStorage
+   ├─ lib/
+   │  ├─ math.tsx          KaTeX-рендер: <Tex>, <RichText> (текст із $…$)
+   │  └─ graph.tsx         <GraphDiagram>, ringLayout, k5data, кольори вершин
+   ├─ components/
+   │  ├─ common/           Icons, Tweaks
+   │  ├─ curriculum/       HomeScreen, SubjectScreen, ProgressTracker
+   │  └─ layout/           AppHeader, PageHeader
+   └─ subjects/
+      └─ discrete-math/
+         ├─ components/    вступ, екран підтем, GT01 і теоретичні сторінки
+         ├─ data/          контент уроку, підтеми, topics/, порядок сторінок
+         └─ tasks/         інтерактиви, тест, розбір і практичні
 ```
 
-## Що додавати в GitHub
+## Про Tailwind
 
-Додавай у репозиторій папку `frontend` з цими файлами: `src`, `package.json`, `package-lock.json`, `index.html`, `vite.config.ts`, `tailwind.config.ts`, `postcss.config.js`, `tsconfig.json`, `tsconfig.node.json`, `.gitignore`, `README.md`.
+Конфіг експонує палітру, шрифти й тіні дизайн-системи як Tailwind-утиліти
+(`text-navy`, `bg-surface`, `font-head`, `shadow-lg` тощо — через CSS-змінні).
 
-Не додавай: `node_modules`, `dist`, `.npm-cache`. Вони створюються автоматично після `npm install` або `npm run build`.
+Складна, багаторазова стилізація компонентів (картки теорії, граф-фігури,
+панель навігації, лабораторії, анімації) живе у `src/index.css` — це
+ідіоматичний для Tailwind підхід для розгорнутих дизайн-систем. Класи в JSX
+(`className="th-def"`, `gfig` тощо) посилаються саме на ці правила.
 
-## Папки сторінок
+## Залежності
 
-```txt
-src/pages/
-  IntroPage/        стартова анімація графа
-  SubjectsPage/     3 предмети: дискретна математика, прога, матан
-  CoursePage/       список 6 розділів курсу
-  GraphTopicsPage/  список підтем розділу 4
-  LessonPage/       підтема з нижньою навігаційною плашкою
-```
+- `react`, `react-dom` 18.3
+- `katex` — рендер формул
+- `tailwindcss`, `postcss`, `autoprefixer`
+- `vite`, `typescript`, `@vitejs/plugin-react`
 
-## Що вже є
-
-- 6 розділів курсу.
-- Усі розділи закриті, крім `4. Теорія графів`.
-- 12 підтем розділу 4.
-- Для кожної підтеми: теорія, практика, питання по теорії.
-- Прогрес зберігається у браузері.
+Прогрес (відповіді, відвідані сторінки, серія днів) зберігається в `localStorage`
+під ключем `graphs_4_v1`.
