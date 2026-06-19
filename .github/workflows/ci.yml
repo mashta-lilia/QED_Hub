@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (build, vet, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: backend/go.sum
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./...
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  integration:
+    name: Integration (compose + login smoke test)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for backend readiness
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:4000/ready >/dev/null 2>&1; then
+              echo "backend ready"; exit 0
+            fi
+            sleep 3
+          done
+          echo "backend never became ready"; exit 1
+
+      - name: Seed test admin
+        run: docker compose --profile seed run --rm seed
+
+      - name: Smoke test login (expect 200 + JWT)
+        run: |
+          jar="$(mktemp)"
+          csrf="$(curl -s -c "$jar" http://localhost:4000/api/auth/csrf-token \
+            | sed -n 's/.*"csrf_token":"\([^"]*\)".*/\1/p')"
+          code="$(curl -s -o /tmp/login.json -w '%{http_code}' -b "$jar" \
+            -H 'Content-Type: application/json' -H "X-CSRF-Token: $csrf" \
+            -d '{"email":"admin@gmail.com","password":"admin"}' \
+            http://localhost:4000/api/auth/login)"
+          echo "HTTP $code"; cat /tmp/login.json; echo
+          test "$code" = "200"
+          grep -q '"access_token"' /tmp/login.json
+
+      - name: Dump compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

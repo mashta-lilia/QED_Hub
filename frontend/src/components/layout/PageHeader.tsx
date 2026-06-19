@@ -2,6 +2,7 @@ import type { PageDescriptor, PageKind } from '../../types';
 
 const KIND_LABEL: Record<PageKind, string> = {
   theory: 'Теорія',
+  theorem: 'Теорема',
   interactive: 'Інтерактив',
   practice: 'Практика',
 };

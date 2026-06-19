@@ -1,3 +1,15 @@
-export { GT01Theory } from './GT01Theory';
-export { GT01Practice } from './GT01Practice';
-export type { GT01Section } from './GT01SectionTabs';
+export {
+  GT01Intro,
+  GT01TheoryDigraph,
+  GT01TheoryMatrix,
+  GT01TheoryDegree,
+  GT01TheorySequence,
+  GT01TheoryHandshaking,
+  GT01TheoryPigeonhole,
+  GT01TaskSequence,
+  GT01TaskMatrix,
+  GT01TaskRepair,
+  GT01TaskRegular,
+  GT01TaskEqual,
+  GT01TaskDirected,
+} from './GT01Pages';

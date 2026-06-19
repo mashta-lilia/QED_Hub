@@ -92,7 +92,7 @@ export interface LessonData {
 }
 
 /* ---- Page descriptors ---- */
-export type PageKind = 'theory' | 'interactive' | 'practice';
+export type PageKind = 'theory' | 'theorem' | 'interactive' | 'practice';
 export interface PageDescriptor {
   id: string;
   kind: PageKind;

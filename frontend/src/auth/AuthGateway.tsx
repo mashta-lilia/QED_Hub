@@ -19,6 +19,7 @@ import {
   sha256Base64Url,
   validateGmailAddress,
 } from './security';
+import { ensureCsrfToken } from './csrf';
 
 const AUTH_ENDPOINTS = {
   login: '/api/auth/login',
@@ -85,11 +86,6 @@ function blankSignup(): SignupFormState {
   return { email: '', password: '', confirmPassword: '' };
 }
 
-function getCsrfToken(): string {
-  const meta = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]');
-  return meta?.content || '';
-}
-
 function mapError(code: string): string {
   return ERROR_MESSAGES[code] || 'Сталася помилка. Спробуйте пізніше.';
 }
@@ -124,12 +120,13 @@ async function postJson<TPayload extends object, TResponse extends AuthResult | 
   endpoint: string,
   payload: TPayload,
 ): Promise<TResponse> {
+  const csrfToken = await ensureCsrfToken();
   const response = await fetch(endpoint, {
     method: 'POST',
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': getCsrfToken(),
+      'X-CSRF-Token': csrfToken,
     },
     body: JSON.stringify(payload),
   });
@@ -151,13 +148,32 @@ function demoResult(email: string, provider: 'password' | 'google' = 'password')
   return { ok: true, message: 'Готово.', user: { email, provider } };
 }
 
+interface BackendAuthResponse {
+  access_token?: string;
+  user?: { email?: string };
+}
+
+// The login/Google endpoints return AuthResponse ({ access_token, user }), not the
+// { ok, message, user } shape the UI uses. postJson already normalizes HTTP errors
+// to { ok: false }, so only the success body needs mapping here.
+function toAuthResult(response: AuthResult, fallbackEmail: string, provider: 'password' | 'google'): AuthResult {
+  const raw = response as AuthResult & BackendAuthResponse;
+  if (raw.ok === false) return response;
+  if (raw.access_token) {
+    return { ok: true, message: 'Готово.', user: { email: raw.user?.email || fallbackEmail, provider } };
+  }
+  if (raw.ok === true && raw.user) return response;
+  return { ok: false, message: mapError('AUTH_001') };
+}
+
 async function login(email: string, password: string): Promise<AuthResult> {
   if (import.meta.env.DEV) {
     await new Promise((resolve) => window.setTimeout(resolve, 550));
     return password ? demoResult(email) : { ok: false, message: 'Invalid credentials' };
   }
 
-  return postJson(AUTH_ENDPOINTS.login, { email, password });
+  const response = await postJson<{ email: string; password: string }, AuthResult>(AUTH_ENDPOINTS.login, { email, password });
+  return toAuthResult(response, email, 'password');
 }
 
 async function register(payload: RegistrationPayload): Promise<AuthResult> {
@@ -223,11 +239,12 @@ async function finishGoogleOAuth(code: string, codeVerifier: string): Promise<Au
     return demoResult('google.user@gmail.com', 'google');
   }
 
-  return postJson(AUTH_ENDPOINTS.googleAuth, {
+  const response = await postJson<{ code: string; codeVerifier: string; redirectUri: string }, AuthResult>(AUTH_ENDPOINTS.googleAuth, {
     code,
     codeVerifier,
     redirectUri: window.location.origin,
   });
+  return toAuthResult(response, '', 'google');
 }
 
 async function createPkceChallenge(): Promise<{ verifier: string; challenge: string }> {
@@ -675,7 +692,7 @@ export function AuthGateway({ onAuthenticated }: AuthGatewayProps): JSX.Element 
         <div className="auth-brand">
           <span className="auth-mark" />
           <div>
-            <b>Аксіома</b>
+            <b>Q.E.D</b>
             <p>Безпечний вхід до навчальної платформи</p>
           </div>
         </div>

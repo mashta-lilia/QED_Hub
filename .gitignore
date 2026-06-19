@@ -28,6 +28,9 @@ pnpm-debug.log*
 backend/data/
 backend/.env
 
+# docker compose local overrides
+/.env
+
 # local Go caches used by Codex verification
 .gocache/
 .gomodcache/
