@@ -16,6 +16,7 @@ import {
   GT01TaskRepair, GT01TaskRegular, GT01TaskEqual, GT01TaskDirected,
 } from './subjects/discrete-math/components/GT01';
 import { AwakenIntro } from './subjects/discrete-math/components/AwakenIntro';
+import { GT01TaskBank, GT02TaskBank, GT03TaskBank } from './subjects/discrete-math/components/tasks/TaskCard';
 import { GraphSubtopicsScreen } from './subjects/discrete-math/components/GraphSubtopicsScreen';
 import type { AuthenticatedUser } from './auth/types';
 import { restoreSession, logout as logoutRequest } from './auth/session';
@@ -203,6 +204,12 @@ export default function App() {
         return <GT01TaskEqual />;
       case 'gt01-task-directed':
         return <GT01TaskDirected />;
+      case 'gt01-taskbank':
+        return <GT01TaskBank />;
+      case 'gt02-taskbank':
+        return <GT02TaskBank />;
+      case 'gt03-taskbank':
+        return <GT03TaskBank />;
       case 'concept':
         return <TheoryConcept />;
       case 'iso':

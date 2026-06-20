@@ -15,6 +15,7 @@ export const PAGES: PageDescriptor[] = [
   { id: 'gt01-task-repair', kind: 'practice', title: 'Полагодь лему', lead: 'Додай або видали ребра, щоб лема виконувалась.' },
   { id: 'gt01-theory-pigeonhole', kind: 'theory', title: 'Збіг степенів', lead: 'Принцип Діріхле: завжди знайдуться дві вершини однакового степеня.' },
   { id: 'gt01-task-equal', kind: 'practice', title: 'Знайди однакові', lead: 'Клікни дві вершини з однаковим степенем.' },
+  { id: 'gt01-taskbank', kind: 'practice', title: 'Банк задач 4.1', lead: 'Усі задачі підрозділу 4.1 у форматі дій: рахуй, будуй, обирай «Так/Ні», збирай доведення.' },
 
   // ── General graph track pages ──
   { id: 'concept', kind: 'theory', title: 'Поняття графа. Способи задання', lead: 'Вершини, ребра, суміжність — і чотири способи задати той самий граф.' },
@@ -23,6 +24,7 @@ export const PAGES: PageDescriptor[] = [
   { id: 'degreelab', kind: 'interactive', title: 'Лема про рукостискання', lead: 'Будуйте граф клацанням і стежте: сума степенів завжди дорівнює подвоєній кількості ребер.' },
   { id: 'paths', kind: 'theory', title: "Шляхи та зв'язність", lead: "Маршрути, ланцюги, цикли, відстань, радіус, діаметр і центр графа." },
   { id: 'conncheck', kind: 'theory', title: "Перевірка зв'язності", lead: 'Степені матриці суміжності та матриця досяжності.' },
+  { id: 'gt02-taskbank', kind: 'practice', title: 'Банк задач 4.2', lead: 'Прокладай найкоротші шляхи, шукай мости й точки зчленування, рахуй відстані, збирай доведення.' },
   { id: 'trees', kind: 'theory', title: 'Дерева та двочасткові графи', lead: 'Критерії дерева, кістякові дерева, цикломатичне число й теорема Кьоніга.' },
   { id: 'planar', kind: 'theory', title: 'Плоскі та планарні графи', lead: 'Формула Ейлера, графи K₅ і K₃,₃ та теорема Куратовського.' },
   { id: 'coloring', kind: 'theory', title: 'Розфарбування графів', lead: 'Хроматичне число та гіпотеза чотирьох фарб.' },
@@ -30,6 +32,7 @@ export const PAGES: PageDescriptor[] = [
   { id: 'traversal', kind: 'theory', title: 'Обходи: Ейлер і Гамільтон', lead: 'Сім мостів Кеніґсберга й два класичні типи обходу графа.' },
   { id: 'eulerlab', kind: 'interactive', title: 'Мости Кеніґсберга', lead: 'Чому неможливо обійти всі мости — і як виглядає справжній ейлерів обхід.' },
   { id: 'digraph', kind: 'theory', title: 'Орієнтовані графи', lead: "Дуги, напівстепені, джерела й стоки, сильна зв'язність." },
+  { id: 'gt03-taskbank', kind: 'practice', title: 'Банк задач 4.3', lead: 'Проходь ейлерові й гамільтонові обходи, працюй із напівстепенями орграфів, доводь теореми про турніри.' },
   { id: 'applications', kind: 'theory', title: 'Граф як модель', lead: 'Де теорія графів працює у науці, техніці та повсякденні.' },
   { id: 'practice', kind: 'practice', title: 'Перевірте себе', lead: 'Запитання з миттєвою перевіркою. Кожна правильна відповідь — +10 XP.' },
   { id: 'worked', kind: 'practice', title: 'Розбір задачі', lead: 'Покроковий аналіз характеристик графа за його діаграмою.' },
@@ -50,6 +53,7 @@ export const GT01_TRACK = [
   'gt01-task-repair',
   'gt01-theory-pigeonhole',
   'gt01-task-equal',
+  'gt01-taskbank',
 ];
 
 export const GENERAL_GRAPH_TRACK = [
@@ -58,8 +62,17 @@ export const GENERAL_GRAPH_TRACK = [
   'digraph', 'applications', 'practice', 'worked', 'practicals',
 ];
 
-export const LESSON_TRACK = [...GT01_TRACK, ...GENERAL_GRAPH_TRACK];
+// Module 4.2 — paths & connectivity: reuse existing theory pages + its own task bank.
+export const GT02_TRACK = ['paths', 'conncheck', 'gt02-taskbank'];
+
+// Module 4.3 — traversals & directed graphs.
+export const GT03_TRACK = ['traversal', 'digraph', 'gt03-taskbank'];
+
+export const LESSON_TRACK = [...GT01_TRACK, ...GENERAL_GRAPH_TRACK, 'gt02-taskbank', 'gt03-taskbank'];
 
 export function getLessonTrackForSubtopic(subtopicId: string) {
-  return subtopicId === 'g41' ? GT01_TRACK : GENERAL_GRAPH_TRACK;
+  if (subtopicId === 'g41') return GT01_TRACK;
+  if (subtopicId === 'g42') return GT02_TRACK;
+  if (subtopicId === 'g43') return GT03_TRACK;
+  return GENERAL_GRAPH_TRACK;
 }

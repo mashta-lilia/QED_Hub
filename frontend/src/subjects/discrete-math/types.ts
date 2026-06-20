@@ -68,8 +68,12 @@ export type TaskType =
   | 'node-click'     // student clicks specific nodes
   | 'edge-click'     // student clicks specific edges
   | 'repair'         // student fixes a broken graph
-  | 'impossibility'  // student declares something impossible
-  | 'order-steps'    // student orders algorithm steps
+  | 'impossibility'  // student declares something impossible / answers exists?
+  | 'order-steps'    // student reassembles an ordered proof
+  | 'compute'        // student types a numeric / symbolic answer
+  | 'path-trace'     // student walks edges to trace a (shortest) path
+  | 'euler-trace'    // student traverses every edge exactly once
+  | 'hamilton-trace' // student visits every vertex once and returns
   | 'color-assign';  // student assigns colors to nodes
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
