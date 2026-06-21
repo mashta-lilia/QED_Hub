@@ -1,41 +1,43 @@
 import { APP_NAME } from '../../data/subjects';
 import { ChevL } from '../common/Icons';
+import { QedMark, QedMarkDark } from '../common/QedLogo';
+import { StreakBadge } from '../common/StreakBadge';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 interface AppHeaderProps {
   streak: number;
   onBack?: () => void;
   backLabel?: string;
-  onLogout?: () => void;
+  onProfileOpen: () => void;
+  initials?: string;
+  avatarDataUrl?: string;
+  darkMode?: boolean;
+  onToggleDark: () => void;
 }
 
-export function AppHeader({ streak, onBack, backLabel, onLogout }: AppHeaderProps) {
+export function AppHeader({ streak, onBack, backLabel, onProfileOpen, initials = 'С', avatarDataUrl, darkMode, onToggleDark }: AppHeaderProps) {
   return (
     <div className="apphdr">
       <div className="ah-brand">
+        {darkMode
+          ? <QedMarkDark size="sm" bgColor="#0a1120" />
+          : <QedMark size="sm" surfaceClassName="border-bg" />
+        }
+        <span className="ah-wordmark">{APP_NAME}</span>
         {onBack && (
           <button className="ah-back" onClick={onBack}>
             <ChevL /> {backLabel || 'Назад'}
           </button>
         )}
-        <div className="tb-logo">
-          <span />
-        </div>
-        <div className="ah-name">{APP_NAME}</div>
       </div>
+
       <div className="ah-right">
-        <div className="ah-streak">
-          <span className="tb-flame" />
-          <b>{streak}</b>
-          <em>днів поспіль</em>
-        </div>
-        <button className="ah-avatar" title="Профіль">
-          S
+        <ThemeToggle darkMode={Boolean(darkMode)} onToggle={onToggleDark} />
+        <StreakBadge days={streak} className="shrink-0" />
+
+        <button className="ah-avatar" title="Профіль" onClick={onProfileOpen}>
+          {avatarDataUrl ? <img src={avatarDataUrl} alt="Фото профілю" /> : initials}
         </button>
-        {onLogout && (
-          <button className="ah-logout" onClick={onLogout} title="Вийти">
-            Вийти
-          </button>
-        )}
       </div>
     </div>
   );
