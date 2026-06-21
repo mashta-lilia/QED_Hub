@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { AuthGateway } from './auth/AuthGateway';
+// import { AuthGateway } from './auth/AuthGateway';
 import { ChevL, ChevR } from './components/common/Icons';
+import { ThemeToggle } from './components/common/ThemeToggle';
 import { TweakColor, TweakRadio, TweakSection, TweaksPanel, useTweaks } from './components/common/Tweaks';
 import { HomeScreen } from './components/curriculum/HomeScreen';
 import { Ring } from './components/curriculum/ProgressTracker';
 import { SubjectScreen } from './components/curriculum/SubjectScreen';
 import { AppHeader } from './components/layout/AppHeader';
 import { PageHeader } from './components/layout/PageHeader';
+import { DEFAULT_STUDENT_PROFILE, getStudentInitials, ProfilePage, type StudentProfile } from './components/layout/ProfilePage';
 import { DISCRETE_TOPICS, SUBJECTS } from './data/subjects';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import {
@@ -18,7 +20,6 @@ import {
 import { AwakenIntro } from './subjects/discrete-math/components/AwakenIntro';
 import { GT01TaskBank, GT02TaskBank, GT03TaskBank } from './subjects/discrete-math/components/tasks/TaskCard';
 import { GraphSubtopicsScreen } from './subjects/discrete-math/components/GraphSubtopicsScreen';
-import type { AuthenticatedUser } from './auth/types';
 import { restoreSession, logout as logoutRequest } from './auth/session';
 import type { PageDescriptor, TweakValues } from './types';
 import {
@@ -61,13 +62,29 @@ PAGES.forEach((p) => {
   PAGE_META[p.id] = p;
 });
 
-type Screen = 'awaken' | 'home' | 'subject' | 'subtopics' | 'lesson';
+type Screen = 'awaken' | 'home' | 'subject' | 'subtopics' | 'lesson' | 'profile';
+type ReturnScreen = Exclude<Screen, 'profile'>;
+
+const PROFILE_STORAGE_KEY = 'qed.student.profile';
+
+function loadStudentProfile(): StudentProfile {
+  try {
+    const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!saved) return DEFAULT_STUDENT_PROFILE;
+    return { ...DEFAULT_STUDENT_PROFILE, ...JSON.parse(saved) };
+  } catch {
+    return DEFAULT_STUDENT_PROFILE;
+  }
+}
 
 export default function App() {
   const data = GD;
   const [t, setTweak] = useTweaks<TweakValues>(TWEAK_DEFAULTS);
-  const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
+  // const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === '1');
+  const [studentProfile, setStudentProfile] = useState<StudentProfile>(() => loadStudentProfile());
+  const [profileReturnScreen, setProfileReturnScreen] = useState<ReturnScreen>('home');
   const {
     answers,
     answer,
@@ -116,6 +133,13 @@ export default function App() {
     if (stageRef.current) stageRef.current.scrollTop = 0;
   }
 
+  function openProfile() {
+    if (screen === 'profile') return;
+    setProfileReturnScreen(screen);
+    setScreen('profile');
+    if (stageRef.current) stageRef.current.scrollTop = 0;
+  }
+
   useEffect(() => {
     if (screen !== 'lesson') return;
     const onKey = (e: KeyboardEvent) => {
@@ -127,13 +151,16 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, screen]);
 
+  useEffect(() => {
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(studentProfile));
+  }, [studentProfile]);
+
   // On boot, try to restore an existing session from the refresh cookie.
   useEffect(() => {
     let active = true;
     restoreSession().then((user) => {
       if (!active) return;
       if (user) {
-        setAuthUser(user);
         setScreen('home');
       }
       setAuthChecked(true);
@@ -143,15 +170,22 @@ export default function App() {
     };
   }, []);
 
-  function handleAuthenticated(user: AuthenticatedUser) {
-    setAuthUser(user);
-    setScreen('home');
-  }
+  // function handleAuthenticated(user: AuthenticatedUser) {
+    // setAuthUser(user);
+    // setScreen('home');
+  // }
 
   async function handleLogout() {
     await logoutRequest();
-    setAuthUser(null);
     setScreen('home');
+  }
+
+  function toggleDark() {
+    setDarkMode((v) => {
+      const next = !v;
+      localStorage.setItem('darkMode', next ? '1' : '0');
+      return next;
+    });
   }
 
   const accent = t.accent;
@@ -159,6 +193,8 @@ export default function App() {
     '--accent': accent,
     '--head-font': HEAD_FONTS[t.headFont] || HEAD_FONTS.Manrope,
   } as React.CSSProperties;
+  const themeAttr = darkMode ? 'dark' : undefined;
+  const darkClass = darkMode ? 'dark' : '';
 
   // прогрес по дискретній математиці
   const setsProgress = lessonProgress;
@@ -267,9 +303,13 @@ export default function App() {
     </TweaksPanel>
   );
 
+  const lessonsDone = Object.values(visited).filter(Boolean).length;
+  const totalLessons = LESSON_TRACK.length;
+  const studentInitials = getStudentInitials(studentProfile.name);
+
   if (!authChecked) {
     return (
-      <div className="app" style={rootStyle}>
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
         <div className="stage" style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}>
           <div className="auth-loading">Завантаження…</div>
         </div>
@@ -277,14 +317,14 @@ export default function App() {
     );
   }
 
-  if (!authUser) {
-    return <AuthGateway onAuthenticated={handleAuthenticated} />;
-  }
+  // if (!authUser) {
+    // return <AuthGateway onAuthenticated={handleAuthenticated} />;
+  // }
 
   /* ---------- екран: вступна анімація ---------- */
   if (screen === 'awaken') {
     return (
-      <div className="app" style={rootStyle}>
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
         <div className="stage" ref={stageRef}>
           <div className="page">
             <AwakenIntro accent={accent} onContinue={() => goScreen('home')} />
@@ -295,11 +335,42 @@ export default function App() {
     );
   }
 
+  if (screen === 'profile') {
+    return (
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
+        <AppHeader
+          streak={streak}
+          darkMode={darkMode}
+          onBack={() => goScreen(profileReturnScreen)}
+          backLabel="Назад"
+          onProfileOpen={openProfile}
+          initials={studentInitials}
+          avatarDataUrl={studentProfile.avatarDataUrl}
+          onToggleDark={toggleDark}
+        />
+        <div className="stage" ref={stageRef}>
+          <ProfilePage
+            profile={studentProfile}
+            onChange={setStudentProfile}
+            onBack={() => goScreen(profileReturnScreen)}
+            onLogout={handleLogout}
+            streak={streak}
+            xp={xp}
+            lessonsDone={lessonsDone}
+            totalLessons={totalLessons}
+            overall={discreteOverall}
+          />
+        </div>
+        {tweaksPanel}
+      </div>
+    );
+  }
+
   /* ---------- екран: головне вікно (предмети) ---------- */
   if (screen === 'home') {
     return (
-      <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} onLogout={handleLogout} />
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
+        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
         <div className="stage" ref={stageRef}>
           <HomeScreen
             subjects={SUBJECTS}
@@ -317,8 +388,8 @@ export default function App() {
   /* ---------- екран: предмет (теми + прогрес) ---------- */
   if (screen === 'subject') {
     return (
-      <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} onBack={() => goScreen('home')} backLabel="Предмети" onLogout={handleLogout} />
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
+        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('home')} backLabel="Предмети" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
         <div className="stage" ref={stageRef}>
           <SubjectScreen
             subject={subject}
@@ -336,14 +407,16 @@ export default function App() {
   }
 
   if (screen === 'subtopics') {
-    const graphSubtopics = GRAPH_SUBTOPICS.map((st, index) => ({
-      ...st,
-      progress: index === 0 ? setsProgress : 0,
-    }));
+    const graphSubtopics = GRAPH_SUBTOPICS.map((st) => {
+      const track = getLessonTrackForSubtopic(st.id);
+      const visitedCount = track.filter((id) => visited[id]).length;
+      const progress = track.length === 0 ? 0 : Math.round((visitedCount / track.length) * 100);
+      return { ...st, progress };
+    });
 
     return (
-      <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} onBack={() => goScreen('subject')} backLabel="Теми" onLogout={handleLogout} />
+      <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
+        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('subject')} backLabel="Теми" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
 
         <div className="stage" ref={stageRef}>
           <GraphSubtopicsScreen
@@ -363,7 +436,7 @@ export default function App() {
 
   /* ---------- екран: урок (усе разом) ---------- */
   return (
-    <div className={'app theory-' + t.theoryStyle} style={rootStyle}>
+    <div className={`app theory-${t.theoryStyle} ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
       <div className="topbar">
         <div className="tb-brand">
           <button className="tb-back" onClick={() => goScreen('subtopics')} title="До підтем">
@@ -391,6 +464,7 @@ export default function App() {
             </div>
           </div>
           <div className="tb-divider hide-sm" />
+          <ThemeToggle darkMode={darkMode} onToggle={toggleDark} className="tb-theme-toggle" />
           <div className="tb-stat hide-sm">
             <div className="tb-flame" />
             <div className="tb-statnum" style={{ color: 'var(--amber)' }}>
@@ -411,6 +485,9 @@ export default function App() {
               {Math.round(pct)}%
             </div>
           </div>
+          <button className="tb-av" title="Профіль" onClick={openProfile}>
+            {studentProfile.avatarDataUrl ? <img src={studentProfile.avatarDataUrl} alt="Фото профілю" /> : studentInitials}
+          </button>
         </div>
       </div>
 

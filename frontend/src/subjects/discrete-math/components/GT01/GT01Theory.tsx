@@ -36,7 +36,7 @@ function DefinitionCard({ definition }: { definition: (typeof GT01.theory.defini
 }
 
 function TheoremCard({ theorem }: { theorem: (typeof GT01.theory.theorems)[number] }) {
-  const [open, setOpen] = useState(theorem.id === 'thm-handshaking');
+  const [open, setOpen] = useState(false);
 
   return (
     <article className="rounded-[20px] border border-accent/25 bg-white p-5 shadow-sm">

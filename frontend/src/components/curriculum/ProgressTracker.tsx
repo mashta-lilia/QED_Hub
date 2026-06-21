@@ -23,7 +23,7 @@ export function Ring({ pct, accent, size = 40, sw = 5 }: RingProps) {
         strokeDashoffset={c * (1 - pct / 100)}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
-      <text x={size / 2} y={size / 2 + 4} className="ring-txt" fontSize={size * 0.3}>
+      <text x={size / 2} y={size / 2} dy="0.35em" className="ring-txt" fontSize={size * 0.3}>
         {Math.round(pct)}
       </text>
     </svg>
