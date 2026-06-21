@@ -1,0 +1,103 @@
+name: qed-hub
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qed}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qed}
+      POSTGRES_DB: ${POSTGRES_DB:-qed_hub}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qed} -d ${POSTGRES_DB:-qed_hub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: applies SQL migrations, then exits. Backend waits for success.
+  migrate:
+    image: migrate/migrate:v4.17.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/sql/migration:/migrations:ro
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER:-qed}:${POSTGRES_PASSWORD:-qed}@postgres:5432/${POSTGRES_DB:-qed_hub}?sslmode=disable"
+      - "up"
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PORT: "4000"
+      ENV: "development"
+      DATABASE_URL: "postgres://${POSTGRES_USER:-qed}:${POSTGRES_PASSWORD:-qed}@postgres:5432/${POSTGRES_DB:-qed_hub}?sslmode=disable"
+      REDIS_URL: "redis://redis:6379/0"
+      JWT_SYMMETRIC_KEY: "${JWT_SYMMETRIC_KEY:-dev-local-jwt-secret-please-change-0123456789}"
+      JWT_EXPIRATION: "15m"
+      CLIENT_ORIGIN: "${CLIENT_ORIGIN:-http://localhost:8080}"
+      SECURE_COOKIES: "false"
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    restart: unless-stopped
+
+  # Optional: seed a verified test admin. Run with:
+  #   docker compose --profile seed run --rm seed
+  seed:
+    build:
+      context: ./backend
+    profiles: ["seed"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-qed}:${POSTGRES_PASSWORD:-qed}@postgres:5432/${POSTGRES_DB:-qed_hub}?sslmode=disable"
+      SEED_EMAIL: "${SEED_EMAIL:-admin@gmail.com}"
+      SEED_PASSWORD: "${SEED_PASSWORD:-admin}"
+      SEED_NAME: "${SEED_NAME:-admin}"
+    entrypoint: ["/app/seed"]
+    restart: "no"
+
+volumes:
+  pgdata:

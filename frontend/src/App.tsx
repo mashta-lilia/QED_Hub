@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-// import { AuthGateway } from './auth/AuthGateway';
+import { AuthGateway } from './auth/AuthGateway';
 import { ChevL, ChevR } from './components/common/Icons';
 import { TweakColor, TweakRadio, TweakSection, TweaksPanel, useTweaks } from './components/common/Tweaks';
 import { HomeScreen } from './components/curriculum/HomeScreen';
@@ -9,10 +9,17 @@ import { AppHeader } from './components/layout/AppHeader';
 import { PageHeader } from './components/layout/PageHeader';
 import { DISCRETE_TOPICS, SUBJECTS } from './data/subjects';
 import { useLessonProgress } from './hooks/useLessonProgress';
-import { GT01Practice, GT01Theory, type GT01Section } from './subjects/discrete-math/components/GT01';
+import {
+  GT01Intro, GT01TheoryDigraph, GT01TheoryMatrix, GT01TheoryDegree,
+  GT01TheorySequence, GT01TheoryHandshaking, GT01TheoryPigeonhole,
+  GT01TaskSequence, GT01TaskMatrix,
+  GT01TaskRepair, GT01TaskRegular, GT01TaskEqual, GT01TaskDirected,
+} from './subjects/discrete-math/components/GT01';
 import { AwakenIntro } from './subjects/discrete-math/components/AwakenIntro';
+import { GT01TaskBank, GT02TaskBank, GT03TaskBank } from './subjects/discrete-math/components/tasks/TaskCard';
 import { GraphSubtopicsScreen } from './subjects/discrete-math/components/GraphSubtopicsScreen';
-// import type { AuthenticatedUser } from './auth/types';
+import type { AuthenticatedUser } from './auth/types';
+import { restoreSession, logout as logoutRequest } from './auth/session';
 import type { PageDescriptor, TweakValues } from './types';
 import {
   TheoryConcept,
@@ -59,7 +66,8 @@ type Screen = 'awaken' | 'home' | 'subject' | 'subtopics' | 'lesson';
 export default function App() {
   const data = GD;
   const [t, setTweak] = useTweaks<TweakValues>(TWEAK_DEFAULTS);
-  // const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
+  const [authUser, setAuthUser] = useState<AuthenticatedUser | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const {
     answers,
     answer,
@@ -108,16 +116,6 @@ export default function App() {
     if (stageRef.current) stageRef.current.scrollTop = 0;
   }
 
-  function goToGT01Section(tab: GT01Section) {
-    const pageByTab: Record<GT01Section, string> = {
-      theory: 'gt01-theory',
-      theorems: 'gt01-theorems',
-      practice: 'gt01-practice',
-    };
-    const targetIndex = currentLessonTrack.indexOf(pageByTab[tab]);
-    if (targetIndex >= 0) gotoLesson(targetIndex);
-  }
-
   useEffect(() => {
     if (screen !== 'lesson') return;
     const onKey = (e: KeyboardEvent) => {
@@ -128,6 +126,33 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, screen]);
+
+  // On boot, try to restore an existing session from the refresh cookie.
+  useEffect(() => {
+    let active = true;
+    restoreSession().then((user) => {
+      if (!active) return;
+      if (user) {
+        setAuthUser(user);
+        setScreen('home');
+      }
+      setAuthChecked(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function handleAuthenticated(user: AuthenticatedUser) {
+    setAuthUser(user);
+    setScreen('home');
+  }
+
+  async function handleLogout() {
+    await logoutRequest();
+    setAuthUser(null);
+    setScreen('home');
+  }
 
   const accent = t.accent;
   const rootStyle = {
@@ -153,12 +178,38 @@ export default function App() {
 
   function renderPage(id: string) {
     switch (id) {
-      case 'gt01-theory':
-        return <GT01Theory activeTab="theory" onTabChange={goToGT01Section} />;
-      case 'gt01-theorems':
-        return <GT01Theory activeTab="theorems" onTabChange={goToGT01Section} />;
-      case 'gt01-practice':
-        return <GT01Practice onTabChange={goToGT01Section} />;
+      case 'gt01-intro':
+        return <GT01Intro />;
+      case 'gt01-theory-digraph':
+        return <GT01TheoryDigraph />;
+      case 'gt01-theory-matrix':
+        return <GT01TheoryMatrix />;
+      case 'gt01-theory-degree':
+        return <GT01TheoryDegree />;
+      case 'gt01-theory-sequence':
+        return <GT01TheorySequence />;
+      case 'gt01-theory-handshaking':
+        return <GT01TheoryHandshaking />;
+      case 'gt01-theory-pigeonhole':
+        return <GT01TheoryPigeonhole />;
+      case 'gt01-task-sequence':
+        return <GT01TaskSequence />;
+      case 'gt01-task-matrix':
+        return <GT01TaskMatrix />;
+      case 'gt01-task-repair':
+        return <GT01TaskRepair />;
+      case 'gt01-task-regular':
+        return <GT01TaskRegular />;
+      case 'gt01-task-equal':
+        return <GT01TaskEqual />;
+      case 'gt01-task-directed':
+        return <GT01TaskDirected />;
+      case 'gt01-taskbank':
+        return <GT01TaskBank />;
+      case 'gt02-taskbank':
+        return <GT02TaskBank />;
+      case 'gt03-taskbank':
+        return <GT03TaskBank />;
       case 'concept':
         return <TheoryConcept />;
       case 'iso':
@@ -216,9 +267,19 @@ export default function App() {
     </TweaksPanel>
   );
 
-  // if (!authUser) {
-  //   return <AuthGateway onAuthenticated={setAuthUser} />;
-  // }
+  if (!authChecked) {
+    return (
+      <div className="app" style={rootStyle}>
+        <div className="stage" style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}>
+          <div className="auth-loading">Завантаження…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+    return <AuthGateway onAuthenticated={handleAuthenticated} />;
+  }
 
   /* ---------- екран: вступна анімація ---------- */
   if (screen === 'awaken') {
@@ -238,7 +299,7 @@ export default function App() {
   if (screen === 'home') {
     return (
       <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} />
+        <AppHeader streak={streak} onLogout={handleLogout} />
         <div className="stage" ref={stageRef}>
           <HomeScreen
             subjects={SUBJECTS}
@@ -257,7 +318,7 @@ export default function App() {
   if (screen === 'subject') {
     return (
       <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} onBack={() => goScreen('home')} backLabel="Предмети" />
+        <AppHeader streak={streak} onBack={() => goScreen('home')} backLabel="Предмети" onLogout={handleLogout} />
         <div className="stage" ref={stageRef}>
           <SubjectScreen
             subject={subject}
@@ -282,7 +343,7 @@ export default function App() {
 
     return (
       <div className="app" style={rootStyle}>
-        <AppHeader streak={streak} onBack={() => goScreen('subject')} backLabel="Теми" />
+        <AppHeader streak={streak} onBack={() => goScreen('subject')} backLabel="Теми" onLogout={handleLogout} />
 
         <div className="stage" ref={stageRef}>
           <GraphSubtopicsScreen
@@ -379,7 +440,7 @@ export default function App() {
           {currentLessonTrack.map((id, i) => (
             <button
               key={id}
-              className={'dn-dot' + (i === page ? ' on' : visited[id] ? ' done' : '')}
+              className={'dn-dot' + (i === page ? ' on' : visited[id] ? ' done' : '') + ' kind-' + (PAGE_META[id]?.kind || 'theory')}
               title={PAGE_META[id].title}
               onClick={() => gotoLesson(i)}
             />

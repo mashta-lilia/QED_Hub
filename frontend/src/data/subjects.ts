@@ -1,4 +1,4 @@
-export const APP_NAME = 'Аксіома';
+export const APP_NAME = 'Q.E.D';
 
 export type SubjectIcon = 'sets' | 'code' | 'calc';
 

@@ -38,11 +38,9 @@ export function GraphSubtopicsScreen({
               <span className="tp-info">
                 <span className="tp-name">{subtopic.title}</span>
                 <span className="tp-meta">
-                  {subtopic.page}
                   <span className="tp-mini">
                     <i style={{ width: `${subtopic.progress}%` }} />
                   </span>
-                  теорія + практика + питання
                 </span>
               </span>
 

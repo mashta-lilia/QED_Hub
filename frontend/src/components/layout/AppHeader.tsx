@@ -5,9 +5,10 @@ interface AppHeaderProps {
   streak: number;
   onBack?: () => void;
   backLabel?: string;
+  onLogout?: () => void;
 }
 
-export function AppHeader({ streak, onBack, backLabel }: AppHeaderProps) {
+export function AppHeader({ streak, onBack, backLabel, onLogout }: AppHeaderProps) {
   return (
     <div className="apphdr">
       <div className="ah-brand">
@@ -30,6 +31,11 @@ export function AppHeader({ streak, onBack, backLabel }: AppHeaderProps) {
         <button className="ah-avatar" title="Профіль">
           S
         </button>
+        {onLogout && (
+          <button className="ah-logout" onClick={onLogout} title="Вийти">
+            Вийти
+          </button>
+        )}
       </div>
     </div>
   );
