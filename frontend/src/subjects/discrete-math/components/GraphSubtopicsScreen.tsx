@@ -6,7 +6,6 @@ interface GraphSubtopicsScreenProps {
   subtopics: GraphSubtopic[];
   overall: number;
   xp: number;
-  streak: number;
   onOpenSubtopic: (id: string) => void;
   onContinue: () => void;
 }
@@ -15,7 +14,6 @@ export function GraphSubtopicsScreen({
   subtopics,
   overall,
   xp,
-  streak,
   onOpenSubtopic,
   onContinue,
 }: GraphSubtopicsScreenProps) {
@@ -67,10 +65,6 @@ export function GraphSubtopicsScreen({
           <div className="pp-stat">
             <span>Зароблено XP</span>
             <b>{xp}</b>
-          </div>
-          <div className="pp-stat">
-            <span>Серія</span>
-            <b>{streak} дн.</b>
           </div>
         </div>
 

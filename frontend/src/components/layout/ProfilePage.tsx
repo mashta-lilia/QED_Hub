@@ -1,5 +1,4 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { StreakBadge } from '../common/StreakBadge';
 
 export interface StudentProfile {
   name: string;
@@ -19,7 +18,6 @@ interface ProfilePageProps {
   onChange: (profile: StudentProfile) => void;
   onBack: () => void;
   onLogout: () => void;
-  streak: number;
   xp: number;
   lessonsDone: number;
   totalLessons: number;
@@ -108,7 +106,6 @@ export function ProfilePage({
   onChange,
   onBack,
   onLogout,
-  streak,
   xp,
   lessonsDone,
   totalLessons,
@@ -132,13 +129,6 @@ export function ProfilePage({
       text: 'Відкрито перший урок',
       label: '01',
       earned: lessonsDone > 0,
-    },
-    {
-      id: 'streak',
-      title: 'Серія',
-      text: '3 дні поспіль',
-      label: '3D',
-      earned: streak >= 3,
     },
     {
       id: 'xp',
@@ -367,10 +357,6 @@ export function ProfilePage({
               <div>
                 <span>Завершено</span>
                 <b>{completedPct}%</b>
-              </div>
-              <div>
-                <span>Серія</span>
-                <StreakBadge days={streak} />
               </div>
             </div>
           </div>
