@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 // import { AuthGateway } from './auth/AuthGateway';
 import { ChevL, ChevR } from './components/common/Icons';
+import { QedMark, QedMarkDark } from './components/common/QedLogo';
 import { ThemeToggle } from './components/common/ThemeToggle';
 import { TweakColor, TweakRadio, TweakSection, TweaksPanel, useTweaks } from './components/common/Tweaks';
 import { HomeScreen } from './components/curriculum/HomeScreen';
@@ -9,7 +10,7 @@ import { SubjectScreen } from './components/curriculum/SubjectScreen';
 import { AppHeader } from './components/layout/AppHeader';
 import { PageHeader } from './components/layout/PageHeader';
 import { DEFAULT_STUDENT_PROFILE, getStudentInitials, ProfilePage, type StudentProfile } from './components/layout/ProfilePage';
-import { DISCRETE_TOPICS, SUBJECTS } from './data/subjects';
+import { APP_NAME, DISCRETE_TOPICS, SUBJECTS } from './data/subjects';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import {
   GT01Intro, GT01TheoryDigraph, GT01TheoryMatrix, GT01TheoryDegree,
@@ -92,7 +93,6 @@ export default function App() {
     lessonProgress,
     lessonProgressPct,
     markVisited,
-    streak,
     visited,
     workedDone,
     xp,
@@ -339,7 +339,6 @@ export default function App() {
     return (
       <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
         <AppHeader
-          streak={streak}
           darkMode={darkMode}
           onBack={() => goScreen(profileReturnScreen)}
           backLabel="Назад"
@@ -354,7 +353,6 @@ export default function App() {
             onChange={setStudentProfile}
             onBack={() => goScreen(profileReturnScreen)}
             onLogout={handleLogout}
-            streak={streak}
             xp={xp}
             lessonsDone={lessonsDone}
             totalLessons={totalLessons}
@@ -370,7 +368,7 @@ export default function App() {
   if (screen === 'home') {
     return (
       <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
-        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
+        <AppHeader darkMode={darkMode} onToggleDark={toggleDark} onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
         <div className="stage" ref={stageRef}>
           <HomeScreen
             subjects={SUBJECTS}
@@ -389,14 +387,13 @@ export default function App() {
   if (screen === 'subject') {
     return (
       <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
-        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('home')} backLabel="Предмети" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
+        <AppHeader darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('home')} backLabel="Предмети" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
         <div className="stage" ref={stageRef}>
           <SubjectScreen
             subject={subject}
             topics={topics}
             overall={discreteOverall}
             xp={xp}
-            streak={streak}
             onOpenTopic={openTopic}
             onContinue={() => openTopic('graphs')}
           />
@@ -416,14 +413,13 @@ export default function App() {
 
     return (
       <div className={`app ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
-        <AppHeader streak={streak} darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('subject')} backLabel="Теми" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
+        <AppHeader darkMode={darkMode} onToggleDark={toggleDark} onBack={() => goScreen('subject')} backLabel="Теми" onProfileOpen={openProfile} initials={studentInitials} avatarDataUrl={studentProfile.avatarDataUrl} />
 
         <div className="stage" ref={stageRef}>
           <GraphSubtopicsScreen
             subtopics={graphSubtopics}
             overall={setsProgress}
             xp={xp}
-            streak={streak}
             onOpenSubtopic={openSubtopic}
             onContinue={() => openSubtopic('g41')}
           />
@@ -439,13 +435,17 @@ export default function App() {
     <div className={`app theory-${t.theoryStyle} ${darkClass}`} data-theme={themeAttr} style={rootStyle}>
       <div className="topbar">
         <div className="tb-brand">
+          <div className="tb-lockup">
+            <div className="tb-qedmark">
+              {darkMode ? <QedMarkDark size="sm" bgColor="#0a1120" /> : <QedMark size="sm" surfaceClassName="border-bg" />}
+            </div>
+            <span className="tb-wordmark">{APP_NAME}</span>
+          </div>
           <button className="tb-back" onClick={() => goScreen('subtopics')} title="До підтем">
             <ChevL />
+            <span>Теми</span>
           </button>
-          <div className="tb-logo">
-            <span />
-          </div>
-          <div>
+          <div className="tb-lesson-meta">
             <div className="tb-course">{subject.name}</div>
             <div className="tb-sub">
               Тема {subtopic.n} · {subtopic.title}
@@ -465,17 +465,6 @@ export default function App() {
           </div>
           <div className="tb-divider hide-sm" />
           <ThemeToggle darkMode={darkMode} onToggle={toggleDark} className="tb-theme-toggle" />
-          <div className="tb-stat hide-sm">
-            <div className="tb-flame" />
-            <div className="tb-statnum" style={{ color: 'var(--amber)' }}>
-              {streak}
-            </div>
-            <div className="tb-statlbl">
-              днів
-              <br />
-              поспіль
-            </div>
-          </div>
           <div className="tb-divider" />
           <div className="tb-stat">
             <Ring pct={pct} accent={accent} size={42} sw={5} />
@@ -494,7 +483,9 @@ export default function App() {
       <div className="stage" ref={stageRef}>
         <div className="page" key={curId}>
           <PageHeader page={cur} idx={page} total={currentLessonTrack.length} modeLabel={'Тема ' + topic.n} />
-          {renderPage(curId)}
+          <div className={curId.startsWith('gt01-') ? 'gt01-scope' : undefined}>
+            {renderPage(curId)}
+          </div>
           <div className="page-cta">
             {page < last ? (
               <button className="pc-btn" style={{ background: accent }} onClick={() => gotoLesson(page + 1)}>

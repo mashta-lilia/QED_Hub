@@ -6,7 +6,6 @@ interface ProfileModalProps {
   onLogout: () => void;
   darkMode: boolean;
   onToggleDark: () => void;
-  streak: number;
   xp: number;
   lessonsDone?: number;
   totalLessons?: number;
@@ -16,12 +15,6 @@ interface ProfileModalProps {
 const IcFlag = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 21V4M5 4h11l-1.5 4L16 12H5" />
-  </svg>
-);
-
-const IcFlame = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2c.5 3.5-2 5-3 6.5C7.5 10.8 7 12.3 7 14a5 5 0 0 0 10 0c0-2-1-3.8-2.3-5.2-.6.9-1.4 1.3-2 1.2.9-2.2.4-5.4-.7-8z" />
   </svg>
 );
 
@@ -44,7 +37,6 @@ export function ProfileModal({
   onLogout,
   darkMode,
   onToggleDark,
-  streak,
   xp,
   lessonsDone = 0,
   totalLessons = 1,
@@ -69,7 +61,6 @@ export function ProfileModal({
   const levelProgress = xp % 100;
   const badges = [
     { on: lessonsDone > 0, label: 'Перший крок', icon: <IcFlag /> },
-    { on: streak >= 3, label: 'Серія 3+ дні', icon: <IcFlame /> },
     { on: xp >= 50, label: '50 XP', icon: <IcStar /> },
     { on: lessonsDone >= safeTotal, label: 'Тему пройдено', icon: <IcTrophy /> },
   ];
@@ -100,10 +91,6 @@ export function ProfileModal({
           <div className="pf-stat">
             <b>{xp}</b>
             <span>усього XP</span>
-          </div>
-          <div className="pf-stat">
-            <b>{streak}</b>
-            <span>днів поспіль</span>
           </div>
           <div className="pf-stat">
             <b>{lessonsDone}/{safeTotal}</b>

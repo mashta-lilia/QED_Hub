@@ -7,12 +7,11 @@ interface SubjectScreenProps {
   topics: (Topic & { progress: number })[];
   overall: number;
   xp: number;
-  streak: number;
   onOpenTopic: (id: string) => void;
   onContinue: () => void;
 }
 
-export function SubjectScreen({ subject, topics, overall, xp, streak, onOpenTopic, onContinue }: SubjectScreenProps) {
+export function SubjectScreen({ subject, topics, overall, xp, onOpenTopic, onContinue }: SubjectScreenProps) {
   const doneCount = topics.filter((topic) => topic.progress >= 100).length;
 
   return (
@@ -74,10 +73,6 @@ export function SubjectScreen({ subject, topics, overall, xp, streak, onOpenTopi
           <div className="pp-stat">
             <span>Зароблено XP</span>
             <b>{xp}</b>
-          </div>
-          <div className="pp-stat">
-            <span>Серія</span>
-            <b>{streak} дн.</b>
           </div>
         </div>
         <button className="pp-cta" onClick={onContinue}>
